@@ -4,3 +4,6 @@ node_modules/
 # default output folders of the scripts — they contain your project names and domains
 vercel-cloudflare-report/
 calibration.json
+
+# plugin eval output
+evals/results/

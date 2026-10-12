@@ -15,9 +15,16 @@ The target setup: apps with real traffic share **one Cloudflare Workers Paid pla
 5. **Fix.** `apply-fixes.mjs` edits code. It only previews by default, never commits, pushes or installs, and refuses to touch files with uncommitted changes. Trade-off fixes run only when you explicitly accept them.
 6. **Measure and move.** Measures real CPU on a trial Worker to replace the estimates, then walks through staging, DNS cutover and rollback in gated phases.
 
-Example output: [`examples/example-report-vercel-commerce.html`](examples/example-report-vercel-commerce.html) (generated from the public vercel/commerce repo).
-
 ## Install
+
+As a Claude Code plugin (recommended — `/plugin` keeps it updated):
+
+```text
+/plugin marketplace add dangdinh87/vercel-to-cloudflare
+/plugin install vercel-to-cloudflare@vercel-to-cloudflare
+```
+
+Or as a plain skill:
 
 ```bash
 git clone https://github.com/dangdinh87/vercel-to-cloudflare ~/.claude/skills/vercel-to-cloudflare
@@ -59,8 +66,12 @@ Findings are heuristics, not proof. Confirm every must-fix in the code, then on 
 ## Tests
 
 ```bash
-node --test scripts/tests/*.test.mjs
+node --test scripts/tests/*.test.mjs        # script unit tests (no network)
+claude plugin validate .                     # plugin + marketplace manifests
+claude plugin eval . --scaffold --trust-plugin --allow-tools Bash,Write,Edit --judge-model sonnet
 ```
+
+The eval suite (`evals/`) has three cases: a readiness report on a small app with known problems, applying only the safe fixes without committing, and the "is moving worth it?" money question. Evals run Claude with your own credentials and cost a little each run. A Sonnet judge is recommended; the default small judge sometimes fails correct but differently-worded answers.
 
 ## License
 

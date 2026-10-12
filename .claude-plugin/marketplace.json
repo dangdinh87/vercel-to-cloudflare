@@ -1,0 +1,12 @@
+{
+  "name": "vercel-to-cloudflare",
+  "description": "Pay less for Next.js hosting: Vercel → Cloudflare Workers analysis, fixes and reports.",
+  "owner": { "name": "dangdinh87", "url": "https://github.com/dangdinh87" },
+  "plugins": [
+    {
+      "name": "vercel-to-cloudflare",
+      "source": "./",
+      "description": "Find which Vercel apps are worth moving to Cloudflare Workers, check readiness, apply safe fixes, get a plain-language report."
+    }
+  ]
+}

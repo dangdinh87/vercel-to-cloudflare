@@ -25,6 +25,12 @@ Fixed during this pass: crash on a broken symlink (dub); library/storybook folde
 
 `apply-fixes.mjs` on copies of ai-chatbot and dub: 7 and 12 edits; two edits to next.config.ts compose; Auth.js re-export route rewritten correctly; second run = 0 edits.
 
+## Behaviour evals (`claude plugin eval`, 2026-10-12, one run each)
+
+- `readiness-report`: the skill triggers and the must-fix answer names inlineCss, request-time `fs` in the OG route and `runtime = 'edge'` (judge 3/3 PASS).
+- `money-question`: 1.00 with a Sonnet judge. The answer warned that moving one app while keeping Pro costs more, treated internal company tools as commercial (so no Hobby), priced Workers per account plus usage, and listed trade-offs. A Haiku judge failed the same answer 3/3, so use `--judge-model sonnet`.
+- Cases that grant Bash (`ran-analyzer`, `safe-fixes`) need a machine whose Docker credential store has no symlink inside, otherwise the eval sandbox refuses to grant Bash.
+
 ## Parser parity
 
 The TypeScript-compiler parser and the regex fallback produce identical reachability, score and findings on large apps; TS parsing is about 2× slower.

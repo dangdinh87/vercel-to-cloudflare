@@ -1,6 +1,6 @@
 ---
 name: vercel-to-cloudflare
-description: Cut a Next.js team's hosting bill by moving apps with real traffic from Vercel to one Cloudflare Workers Paid plan (OpenNext) and leaving small apps on Vercel Hobby, with every trade-off spelled out. Use when asked to reduce Vercel cost, move/convert/port a Vercel app to Cloudflare, find which apps are worth moving, check Workers readiness (import-graph analysis of build-time vs request-time code, 64 MiB bundle, fs, node:dns, WebSocket headers, after()/waitUntil, s-maxage, per-page-view API calls, polling, deps, env, proxy.ts), explain Vercel cost drivers (builds, Fast Origin Transfer, ISR), estimate Workers cost, measure real CPU, or cut over DNS. Produces a plain-language local HTML report.
+description: Cuts a Next.js team's hosting bill by moving apps with real traffic from Vercel to one Cloudflare Workers Paid plan (OpenNext) and leaving small apps on Vercel Hobby, with every trade-off spelled out. Scans the Vercel account and local code, checks Workers readiness (import-graph analysis of build-time vs request-time code, 64 MiB bundle, fs, node:dns, WebSocket headers, native addons, after()/waitUntil, s-maxage, per-page-view API calls, polling, env, proxy.ts), explains Vercel cost drivers, estimates and measures Workers cost, applies safe code fixes and writes a plain-language HTML report. Use when the user wants to reduce a Vercel bill, asks whether to move, convert or port a Next.js app to Cloudflare Workers, or needs a trial Worker, CPU measurement or DNS cutover.
 license: MIT
 ---
 
@@ -18,12 +18,33 @@ Follow [interview-research-report.md](references/interview-research-report.md):
 2. **Re-check volatile facts** (limits, prices, OpenNext support) on the official pages listed there when they are > 30 days old; when sources disagree, say which governs.
 3. **Deliver a local HTML report** with an Overview first, in the user's language: `make-report.mjs … --summary=overview.md --lang=<en|vi> --open`. Chat replies stay short and point to the file.
 
+Copy this checklist into the conversation and tick it off:
+
+```
+Migration progress:
+- [ ] Scan: scan-vercel-apps.mjs → traffic / small / idle apps
+- [ ] Interview: trade-offs, commercial use, hourly value (deep questions for large traffic)
+- [ ] Report: make-report.mjs with an overview in the user's language, opened
+- [ ] User picked an option (stay / move traffic apps / move all)
+- [ ] Fix: apply-fixes.mjs dry run → user sees diff → --write → typecheck + tests + build pass
+- [ ] Trial Worker: bundle < 64 MiB, key routes 200, measure-worker.mjs calibration
+- [ ] Staging with real secrets: login, payments, uploads, revalidation verified
+- [ ] Cutover: DNS records copied and checked with dig, rollback written down
+- [ ] Clean up: delete trial Worker, R2/D1 resources, worktree
+```
+
+## Examples
+
+- *"My Vercel bill keeps growing, should I move to Cloudflare?"* → `scan-vercel-apps.mjs --open`, then ask about trade-offs and commercial use; answer with the money (now → target → saving per year) and which apps to leave alone.
+- *"Can this repo run on Cloudflare Workers?"* → `make-report.mjs --repo=. --out=… --open`; confirm each P0/P1 by opening the file the report points to before calling it a blocker.
+- *"Make it Workers-ready."* → `apply-fixes.mjs .` (dry run) → show the diff → `--write` only after the user agrees → typecheck, tests, build. Trade-off fixes (`--accept=…`) only for trade-offs the user accepted.
+
 ## Golden rules
 
 1. Fix code so it runs on BOTH platforms and ship it to Vercel first; Vercel stays the rollback until Cloudflare is stable ≥ 2 weeks.
 2. Trial in an isolated git worktree with dummy env. Never build the deploy artefact from a tree containing real `.env*` (OpenNext may bundle them). Real secrets only via `wrangler secret put`.
 3. Workers Paid (5 USD/month) for any real app: Free = 10 ms CPU → `exceededCpu` 503s under light concurrency.
-4. Measure, don't guess: `wrangler tail --format json` → `summarize-tail.mjs`.
+4. Measure, don't guess: `measure-worker.mjs` (or `wrangler tail --format json` → `summarize-tail.mjs`).
 5. Each phase has a gate. Read real exit codes from logs, not wrapper success.
 6. Never commit, push, deploy, delete projects or change DNS without explicit approval. Delete public trial `*.workers.dev` Workers afterwards (duplicate site).
 
@@ -33,12 +54,14 @@ Follow [interview-research-report.md](references/interview-research-report.md):
 |---|---|---|
 | 0. Assess | `scan-vercel-apps.mjs`; interview; `make-report.mjs --repo --vercel` for the chosen app; read [feasibility-audit.md](references/feasibility-audit.md), [cost-and-limits.md](references/cost-and-limits.md) | Every P0/P1 confirmed in code; user picked an option |
 | 1. Trial | Worktree + OpenNext per [setup-opennext.md](references/setup-opennext.md); `inspect-worker-bundle.mjs` | Startup < 1 s, bundle < 64 MiB, key routes 200 |
-| 2. Fix | On a branch: `apply-fixes.mjs <repo>` (dry run) → show the diff → `--write` (+ `--accept=` only for trade-offs the user agreed to); then the manual checklist with [code-fixes.md](references/code-fixes.md), [cache-and-request-diet.md](references/cache-and-request-diet.md); ship to Vercel | typecheck + tests + build; Vercel prod smoke OK |
+| 2. Fix | On a branch, loop: `apply-fixes.mjs <repo>` (dry run) → show the diff → `--write` → typecheck + tests + build → if anything fails, fix it or `git checkout -- <file>` and rerun. Then the manual checklist with [code-fixes.md](references/code-fixes.md), [cache-and-request-diet.md](references/cache-and-request-diet.md); ship to Vercel | typecheck + tests + build; Vercel prod smoke OK |
 | 3. Measure | R2 + D1 + DO cache, `enableCacheInterception`; `measure-worker.mjs` → calibration.json | 0 × 5xx at 10–30 concurrent; CPU p50/p90 measured, estimate re-run with `--calibration` |
 | 4. Staging | Real DB branch + secrets; login, payment webhooks, AI streams, uploads, revalidateTag | All money/auth paths verified |
 | 5. Cutover | CI deploy, DNS, domain, placement per [cutover-and-cleanup.md](references/cutover-and-cleanup.md) | Mail records verified with `dig`; rollback documented |
 
-## Scripts (`scripts/`, Node ≥ 22, zero deps, read-only)
+## Scripts (`scripts/`, Node ≥ 22, zero deps)
+
+Run them; don't read them into context unless a result needs explaining. All are read-only except `apply-fixes.mjs --write`.
 
 | Script | Answers |
 |---|---|
@@ -51,7 +74,7 @@ Follow [interview-research-report.md](references/interview-research-report.md):
 | `measure-worker.mjs --url= --worker= [--repo=]` | Real CPU on a trial Worker (tail + light load): cached vs dynamic p50/p90 → `calibration.json`, which replaces the estimate's assumptions (`--calibration=` on make-report / analyze-vercel-account) |
 | `load-test.mjs`, `summarize-tail.mjs` | 5xx under concurrency; CPU p50/p90/max per path from a saved tail |
 
-Heuristics, not proof — see [validation.md](references/validation.md): checked on 33 apps in 18 public repos (cal.com, dub, payload, formbricks, papermark, midday, umami, ai-chatbot…). Unknown packages are inspected in node_modules (native addons → blocker; subprocess users → verify); findings reached only through a library barrel are downgraded. Follows workspace packages, tsconfig `extends`, helper functions up to 2 levels; parses imports with the repo's own TypeScript compiler when installed (the regex fallback gives the same results on large apps). Tests: `node --test scripts/tests/*.test.mjs`.
+Heuristics, not proof — see [validation.md](references/validation.md): checked on 33 apps in 18 public repos (cal.com, dub, payload, formbricks, papermark, midday, umami, ai-chatbot…). Unknown packages are inspected in node_modules (native addons → blocker; subprocess users → verify); findings reached only through a library barrel are downgraded. Follows workspace packages, tsconfig `extends`, helper functions up to 2 levels; parses imports with the repo's own TypeScript compiler when installed (the regex fallback gives the same results on large apps). Tests: `node --test scripts/tests/*.test.mjs`; behaviour evals: `claude plugin eval .` (see `evals/`).
 
 ## Biggest wins (in order)
 
