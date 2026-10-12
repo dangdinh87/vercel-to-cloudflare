@@ -89,7 +89,9 @@ const inline = s => s
 
 /** Markdown (the subset our renderers emit) → HTML fragment. */
 export function mdToFragment(md) {
-  return md.split(/\n{2,}/).map(block => {
+  // A heading line directly followed by text/list (no blank line) is still its own block.
+  const blocks = md.split(/\n{2,}/).flatMap(b => (/^#{1,4} [^\n]*\n/.test(b) ? [b.slice(0, b.indexOf('\n')), b.slice(b.indexOf('\n') + 1)] : [b]))
+  return blocks.map(block => {
     if (/^#{1,4} /.test(block)) { const lvl = block.match(/^#+/)[0].length; return `<h${lvl}>${inline(block.replace(/^#+ /, ''))}</h${lvl}>` }
     if (/^\|/.test(block)) {
       const rows = block.split('\n').filter(l => !/^\|[-|\s]+\|$/.test(l)).map(l => l.slice(1, -1).split(/(?<!\\)\|/).map(c => inline(c.trim().replace(/\\\|/g, '|'))))

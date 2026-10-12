@@ -394,3 +394,10 @@ test('apply-fixes: composes edits on one file, all auth route shapes, idempotent
     } finally { rmSync(dir, { recursive: true }) }
   }
 })
+
+test('markdown: a heading directly followed by a list renders as heading + list', async () => {
+  const { mdToFragment } = await import('../lib/report-render.mjs')
+  const html = mdToFragment('### Must fix\n- one\n- two')
+  assert.match(html, /<h3>Must fix<\/h3>/)
+  assert.match(html, /<ul><li>one<\/li><li>two<\/li><\/ul>/)
+})

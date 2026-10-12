@@ -1,11 +1,21 @@
 {
   "name": "vercel-to-cloudflare",
   "displayName": "Vercel → Cloudflare Workers",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Cut your Next.js hosting bill: find which Vercel apps are worth moving to Cloudflare Workers (OpenNext), check readiness, apply safe fixes, and get a plain-language report.",
-  "author": { "name": "dangdinh87", "url": "https://github.com/dangdinh87" },
+  "author": {
+    "name": "dangdinh87",
+    "url": "https://github.com/dangdinh87"
+  },
   "homepage": "https://github.com/dangdinh87/vercel-to-cloudflare",
   "repository": "https://github.com/dangdinh87/vercel-to-cloudflare",
   "license": "MIT",
-  "keywords": ["nextjs", "vercel", "cloudflare-workers", "opennext", "hosting-cost", "migration"]
+  "keywords": [
+    "nextjs",
+    "vercel",
+    "cloudflare-workers",
+    "opennext",
+    "hosting-cost",
+    "migration"
+  ]
 }

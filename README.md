@@ -1,10 +1,16 @@
 # vercel-to-cloudflare
 
+[![CI](https://github.com/dangdinh87/vercel-to-cloudflare/actions/workflows/ci.yml/badge.svg)](https://github.com/dangdinh87/vercel-to-cloudflare/actions/workflows/ci.yml)
+
 A Claude Code skill that helps you **pay less for Next.js hosting**. It finds which of your Vercel apps get enough traffic to be worth moving, checks whether they will run on Cloudflare Workers (via [OpenNext](https://opennext.js.org/cloudflare)), applies the safe code fixes, and writes a plain-language HTML report: what you pay now, what you would pay, and what you give up.
 
 The target setup: apps with real traffic share **one Cloudflare Workers Paid plan** (5 USD/month per account plus usage). Small apps stay on **Vercel Hobby**, which is free for non-commercial sites. Never trading correctness away is the hard rule; speed, data freshness and some hours of work are the trade-offs, and the report spells each one out.
 
 > Not affiliated with Vercel or Cloudflare. Prices and limits change: the skill re-checks the official pages and dates every number it quotes.
+
+![Report preview: readiness score, must-fix list and next steps for vercel/commerce](assets/report-preview.png)
+
+*Report generated for the public [vercel/commerce](https://github.com/vercel/commerce) repo.*
 
 ## What it does
 
