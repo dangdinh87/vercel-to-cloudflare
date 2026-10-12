@@ -1,0 +1,6 @@
+.DS_Store
+node_modules/
+*.log
+# default output folders of the scripts — they contain your project names and domains
+vercel-cloudflare-report/
+calibration.json
